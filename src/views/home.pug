@@ -10,8 +10,11 @@ html(lang="en")
             h1 hi
         main 
             div 
+                form#nickname
+                    input(type="text", placeholder="choose a nickname", required)
+                    button(type="submit") save
                 ul
-                form
+                form#message
                     input(type="text", placeholder="write a message", required)
                     button(type="submit") send
         script(src="/public/js/app.js")

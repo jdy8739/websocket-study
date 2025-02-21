@@ -19,19 +19,36 @@ const server = http.createServer(app);
 
 const wss = new WebSocketServer({ server });
 
-const sockets = [];
+const connectedSockets = [];
+
+const parseMessage = (message) => JSON.parse(message.toString());
+
+const setNickname = (ws, nickname) => (ws['nickname'] = nickname);
+
+const getNickname = (ws) => ws['nickname'];
 
 wss.on('connection', (ws) => {
-    sockets.push(ws);
+    connectedSockets.push(ws);
 
-    ws.send('hello!');
+    setNickname(ws, 'Anonymous');
+
+    ws.send('Hello from socket server!');
 
     ws.on('close', () => console.log('disconnected from browser!'));
 
-    ws.on('message', (message) => {
-        sockets.forEach((ws) => ws.send(message.toString()));
+    ws.on('message', (_message) => {
+        const { type, message } = parseMessage(_message);
+
+        switch (type) {
+            case 'nickname':
+                setNickname(ws, message);
+                break;
+            case 'message':
+                connectedSockets.forEach((cs) => cs.send(`${getNickname(ws)}: ${message}`));
+                break;
+        }
     });
 });
 
-server.listen(3000, () => console.log('hey'));
+server.listen(3000, () => console.log('Server listening on port 3000!'));
 

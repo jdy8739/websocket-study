@@ -1,7 +1,5 @@
-const socket = new WebSocket(`ws://${window.location.host}`);
-
-const registerSocket = (socket) => {
-    socket.addEventListener('open', () => console.log('connected!'));
+const connectSocket = (socket) => {
+    socket.addEventListener('open', () => console.log('connected with socket server!'));
 
     const ul = document.querySelector('ul');
 
@@ -16,23 +14,55 @@ const registerSocket = (socket) => {
     socket.addEventListener('close', () => console.log('closed!'));
 };
 
-const setFormEvent = (socket) => {
-    const form = document.querySelector('form');
+const stringify = (object) => JSON.stringify(object);
 
-    const input = document.querySelector('input');
+const socketSend = (socket, object) => socket.send(stringify(object));
+
+const setMessageSubmitEvent = (socket) => {
+    const form = document.querySelector('#message');
+
+    const input = form.querySelector('input');
 
     form.addEventListener('submit', (e) => {
         e.preventDefault();
 
-        socket.send(input.value);
+        socketSend(socket, {
+            type: 'message',
+            message: input.value
+        })
 
         input.value = '';
     });
 };
 
-registerSocket(socket);
+const setNicknameSubmitEvent = (socket) => {
+    const form = document.querySelector('#nickname');
 
-setFormEvent(socket);
+    const input = form.querySelector('input');
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        socketSend(socket, {
+            type: 'nickname',
+            message: input.value
+        })
+
+        input.value = '';
+    });
+}
+
+const run = () => {
+    const socket = new WebSocket(`ws://${window.location.host}`);
+    
+    connectSocket(socket);
+
+    setMessageSubmitEvent(socket);
+
+    setNicknameSubmitEvent(socket);
+};
+
+run();
 
 
 
