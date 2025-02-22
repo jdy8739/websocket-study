@@ -20,7 +20,13 @@ const httpServer = http.createServer(app);
 const ioServer = new Server(httpServer);
 
 ioServer.on('connection', (socket) => {
-    console.log('user connected', socket);
+    console.log('user connected');
+
+    socket.on('enter_room', (roomName, callback) => {
+        console.log(roomName);
+
+        callback?.({ roomName });
+    });
 });
 
 httpServer.listen(3000, () => console.log('hey'));
