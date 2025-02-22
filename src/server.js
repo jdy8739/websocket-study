@@ -31,13 +31,11 @@ ioServer.on('connection', (socket) => {
 
         callback?.({ roomName });
 
-        socket.to(roomName).emit('welcome', `User ${socket.id} has joined in the room ${roomName}`);
+        socket.to(roomName).emit('welcome', `User ${socket.nickname || socket.id} has joined in the room ${roomName}`);
     });
 
-    socket.on('nickname', (nickname, roomName, callback) => {
+    socket.on('nickname', (nickname, callback) => {
         socket.nickname = nickname;
-
-        socket.to(roomName).emit('nickname', `The user ${socket.id} is now ${nickname}`);
 
         callback?.();
     });

@@ -4,34 +4,34 @@ const socket = io();
 
 const welcome = document.querySelector("#welcome");
 
-const welcomeForm = welcome.querySelector("form");
+const roomForm = welcome.querySelector("#room");
 
-const welcomeInput = welcomeForm.querySelector("input");
+const roomInput = roomForm.querySelector("input");
 
-//
-
-const room = document.querySelector("#room");
-
-const roomTitle = room.querySelector("h3");
-
-const ul = room.querySelector("ul");
-
-const messageForm = room.querySelector("#msg");
-
-const messageInput = messageForm.querySelector("input");
-
-const nameForm = room.querySelector("#name");
+const nameForm = welcome.querySelector("#name");
 
 const nameInput = nameForm.querySelector("input");
 
-room.hidden = true;
+//
+
+const messages = document.querySelector("#msg");
+
+const title = messages.querySelector("h3");
+
+const ul = messages.querySelector("ul");
+
+const messageForm = messages.querySelector("form");
+
+const messageInput = messageForm.querySelector("input");
+
+messages.hidden = true;
 
 //
 
 const showRoom = ({ roomName }) => {
     welcome.hidden = true;
-    room.hidden = false;
-    roomTitle.innerText = `Welcome to Room ${roomName}`;
+    messages.hidden = false;
+    title.innerText = `Welcome to Room ${roomName}`;
 
     messageForm.addEventListener("submit", (event) => {
         event.preventDefault();
@@ -42,16 +42,6 @@ const showRoom = ({ roomName }) => {
             messageInput.value = "";
         });
     });
-
-    nameForm.addEventListener("submit", (event) => {
-        event.preventDefault();
-
-        socket.emit("nickname", nameInput.value, roomName, () => {
-            addMessage(`Your nickname is ${nameInput.value}`);
-
-            nameInput.value = "";
-        });
-    });
 };
 
 const addMessage = (message) => {
@@ -60,12 +50,22 @@ const addMessage = (message) => {
     ul.appendChild(li);
 };
 
-welcomeForm.addEventListener("submit", (event) => {
+roomForm.addEventListener("submit", (event) => {
     event.preventDefault();
 
-    socket.emit("enter_room", welcomeInput.value, showRoom);
+    socket.emit("enter_room", roomInput.value, showRoom);
 
-    welcomeInput.value = "";
+    roomInput.value = "";
+});
+
+nameForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    socket.emit("nickname", nameInput.value, () => {
+        window.alert(`Your nickname is ${nameInput.value}`);
+
+        nameInput.value = "";
+    });
 });
 
 socket.on("welcome", addMessage);
@@ -73,5 +73,3 @@ socket.on("welcome", addMessage);
 socket.on("bye", addMessage);
 
 socket.on('message', addMessage);
-
-socket.on('nickname', addMessage);
