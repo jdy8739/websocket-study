@@ -33,6 +33,10 @@ const updateRooms = () => {
     ioServer.sockets.emit('rooms_changed', getPublicRooms());
 };
 
+const getRoomSize = (roomName) => {
+    return ioServer.sockets.adapter.rooms.get(roomName)?.size || 0;
+};
+
 ioServer.on('connection', (socket) => {
     console.log('user connected');
 
@@ -45,11 +49,18 @@ ioServer.on('connection', (socket) => {
     socket.on('enter_room', (roomName, callback) => {
         socket.join(roomName);
 
-        callback?.({ roomName });
+        const roomSize = getRoomSize(roomName);
 
-        socket.to(roomName).emit('welcome', `User ${socket.nickname || socket.id} has joined in the room ${roomName}`);
+        socket.to(roomName).emit(
+            'welcome',
+            socket.nickname || socket.id,
+            roomName,
+            roomSize
+        );
 
         updateRooms();
+
+        callback?.({ roomName, roomSize });
     });
 
     socket.on('nickname', (nickname, callback) => {
@@ -67,8 +78,13 @@ ioServer.on('connection', (socket) => {
     });
 
     socket.on('disconnecting', () => {
-        socket.rooms.forEach((room) => { // rooms means the rooms the socket is currently in.
-            socket.to(room).emit('bye', `${socket.nickname || socket.id} has left`);
+        socket.rooms.forEach((roomName) => { // rooms means the rooms the socket is currently in.
+            socket.to(roomName).emit(
+                'bye',
+                socket.nickname || socket.id,
+                roomName,
+                getRoomSize(roomName) - 1
+                );
         });
     });
 

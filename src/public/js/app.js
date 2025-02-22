@@ -30,10 +30,14 @@ messages.hidden = true;
 
 //
 
-const showRoom = ({ roomName }) => {
+const updateRoomSize = (roomName, size) => {
+    title.innerText = `Welcome to Room ${roomName} (${size})`;
+};
+
+const showRoom = ({ roomName, roomSize }) => {
     welcome.hidden = true;
     messages.hidden = false;
-    title.innerText = `Welcome to Room ${roomName}`;
+    updateRoomSize(roomName, roomSize);
 
     messageForm.addEventListener("submit", (event) => {
         event.preventDefault();
@@ -70,9 +74,15 @@ nameForm.addEventListener("submit", (event) => {
     });
 });
 
-socket.on("welcome", addMessage);
+socket.on("welcome", (nickname, roomName, size) => {
+    updateRoomSize(roomName, size);
+    addMessage(`User ${nickname} has joined in this room`);
+});
 
-socket.on("bye", addMessage);
+socket.on("bye", (nickname, roomName, size) => {
+    updateRoomSize(roomName, size);
+    addMessage(`User ${nickname} has left this this room`);
+});
 
 socket.on('message', addMessage);
 
