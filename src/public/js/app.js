@@ -12,6 +12,8 @@ const nameForm = welcome.querySelector("#name");
 
 const nameInput = nameForm.querySelector("input");
 
+const roomList = welcome.querySelector("ul");
+
 //
 
 const messages = document.querySelector("#msg");
@@ -73,3 +75,15 @@ socket.on("welcome", addMessage);
 socket.on("bye", addMessage);
 
 socket.on('message', addMessage);
+
+socket.on('rooms_changed', (publicRooms) => {
+    roomList.innerHTML = "";
+
+    const roomListItems = publicRooms.map((room) => {
+        const li = document.createElement("li");
+        li.innerText = room;
+        return li;
+    });
+
+    roomList.append(...roomListItems);
+});

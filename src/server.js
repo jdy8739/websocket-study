@@ -19,8 +19,24 @@ const httpServer = http.createServer(app);
 
 const ioServer = new Server(httpServer);
 
+const getPublicRooms = () => {
+    const { sockets: { adapter: { sids, rooms } } } = ioServer;
+
+    const sidsKeys = Array.from(sids.keys());
+
+    const roomsKeys = Array.from(rooms.keys());
+
+    return roomsKeys.filter((roomKey) => !sidsKeys.includes(roomKey));
+};
+
+const updateRooms = () => {
+    ioServer.sockets.emit('rooms_changed', getPublicRooms());
+};
+
 ioServer.on('connection', (socket) => {
     console.log('user connected');
+
+    updateRooms();
 
     socket.onAny((event) => {
         console.log(`${socket.id} event: ${event}`);
@@ -32,6 +48,8 @@ ioServer.on('connection', (socket) => {
         callback?.({ roomName });
 
         socket.to(roomName).emit('welcome', `User ${socket.nickname || socket.id} has joined in the room ${roomName}`);
+
+        updateRooms();
     });
 
     socket.on('nickname', (nickname, callback) => {
@@ -43,6 +61,8 @@ ioServer.on('connection', (socket) => {
     socket.on('message', (message, roomName, callback) => {
         socket.to(roomName).emit('message', `${socket.nickname || socket.id}: ${message}`);
 
+        console.log(getPublicRooms())
+
         callback?.();
     });
 
@@ -51,6 +71,8 @@ ioServer.on('connection', (socket) => {
             socket.to(room).emit('bye', `${socket.nickname || socket.id} has left`);
         });
     });
+
+    socket.on('disconnect', updateRooms);
 });
 
 httpServer.listen(3000, () => console.log('hey'));
