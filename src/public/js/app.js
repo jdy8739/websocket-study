@@ -89,9 +89,9 @@ socket.on('message', addMessage);
 socket.on('rooms_changed', (publicRooms) => {
     roomList.innerHTML = "";
 
-    const roomListItems = publicRooms.map((room) => {
+    const roomListItems = publicRooms.map(({ roomName, size }) => {
         const li = document.createElement("li");
-        li.innerText = room;
+        li.innerText = `${roomName} (${size})`;
         return li;
     });
 

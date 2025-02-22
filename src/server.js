@@ -29,12 +29,16 @@ const getPublicRooms = () => {
     return roomsKeys.filter((roomKey) => !sidsKeys.includes(roomKey));
 };
 
-const updateRooms = () => {
-    ioServer.sockets.emit('rooms_changed', getPublicRooms());
-};
-
 const getRoomSize = (roomName) => {
     return ioServer.sockets.adapter.rooms.get(roomName)?.size || 0;
+};
+
+
+const updateRooms = () => {
+    const publicRooms = getPublicRooms()
+        .map((roomName) => ({ roomName, size: getRoomSize(roomName) }));
+
+    ioServer.sockets.emit('rooms_changed', publicRooms);
 };
 
 ioServer.on('connection', (socket) => {
@@ -71,8 +75,6 @@ ioServer.on('connection', (socket) => {
 
     socket.on('message', (message, roomName, callback) => {
         socket.to(roomName).emit('message', `${socket.nickname || socket.id}: ${message}`);
-
-        console.log(getPublicRooms())
 
         callback?.();
     });
