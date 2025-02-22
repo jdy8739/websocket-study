@@ -22,10 +22,28 @@ const ioServer = new Server(httpServer);
 ioServer.on('connection', (socket) => {
     console.log('user connected');
 
+    socket.onAny((event) => {
+        console.log(`${socket.id} event: ${event}`);
+    });
+
     socket.on('enter_room', (roomName, callback) => {
-        console.log(roomName);
+        socket.join(roomName);
 
         callback?.({ roomName });
+
+        socket.to(roomName).emit('welcome', `Someone has joined in the room ${roomName}`);
+    });
+
+    socket.on('message', (message, roomName, callback) => {
+        socket.to(roomName).emit('message', `${socket.id}: ${message}`);
+
+        callback?.();
+    });
+
+    socket.on('disconnecting', () => {
+        socket.rooms.forEach((room) => { // rooms means the rooms the socket is currently in.
+            socket.to(room).emit('bye', `${socket.id} has left`);
+        });
     });
 });
 
