@@ -1,7 +1,3 @@
-const socket = io();
-
-//
-
 const welcome = document.querySelector("#welcome");
 
 const roomForm = welcome.querySelector("#room");
@@ -34,7 +30,7 @@ const updateRoomSize = (roomName, size) => {
     title.innerText = `Welcome to Room ${roomName} (${size})`;
 };
 
-const showRoom = ({ roomName, roomSize }) => {
+const showRoom = (socket, { roomName, roomSize }) => {
     welcome.hidden = true;
     messages.hidden = false;
     updateRoomSize(roomName, roomSize);
@@ -56,44 +52,66 @@ const addMessage = (message) => {
     ul.appendChild(li);
 };
 
-roomForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-
-    socket.emit("enter_room", roomInput.value, showRoom);
-
-    roomInput.value = "";
-});
-
-nameForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-
-    socket.emit("nickname", nameInput.value, () => {
-        window.alert(`Your nickname is ${nameInput.value}`);
-
-        nameInput.value = "";
+const setRoomEnterEvent = (socket) => {
+    roomForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+    
+        socket.emit("enter_room", roomInput.value, (params) => showRoom(socket, params));
+    
+        roomInput.value = "";
     });
-});
+};
 
-socket.on("welcome", (nickname, roomName, size) => {
-    updateRoomSize(roomName, size);
-    addMessage(`User ${nickname} has joined in this room`);
-});
+const setNickNameChangeEvent = (socket) => {
+    nameForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+    
+        socket.emit("nickname", nameInput.value, () => {
+            window.alert(`Your nickname is ${nameInput.value}`);
+    
+            nameInput.value = "";
+        });
+    });
+};
 
-socket.on("bye", (nickname, roomName, size) => {
-    updateRoomSize(roomName, size);
-    addMessage(`User ${nickname} has left this this room`);
-});
-
-socket.on('message', addMessage);
-
-socket.on('rooms_changed', (publicRooms) => {
-    roomList.innerHTML = "";
-
-    const roomListItems = publicRooms.map(({ roomName, size }) => {
-        const li = document.createElement("li");
-        li.innerText = `${roomName} (${size})`;
-        return li;
+const setIoEvents = (socket) => {
+    // fires when user joins a room
+    socket.on("welcome", (nickname, roomName, size) => {
+        updateRoomSize(roomName, size);
+        addMessage(`User ${nickname} has joined in this room`);
     });
 
-    roomList.append(...roomListItems);
-});
+    // fires when user leaves a room
+    socket.on("bye", (nickname, roomName, size) => {
+        updateRoomSize(roomName, size);
+        addMessage(`User ${nickname} has left this this room`);
+    });
+
+    // fires when a message is sent
+    socket.on('message', addMessage);
+    
+    // fires when the list of public rooms changes
+    socket.on('rooms_changed', (publicRooms) => {
+        roomList.innerHTML = "";
+    
+        const roomListItems = publicRooms.map(({ roomName, size }) => {
+            const li = document.createElement("li");
+            li.innerText = `${roomName} (${size})`;
+            return li;
+        });
+    
+        roomList.append(...roomListItems);
+    });
+};
+
+const run = () => {
+    const socket = io();
+
+    setRoomEnterEvent(socket);
+
+    setNickNameChangeEvent(socket);
+
+    setIoEvents(socket);
+};
+
+run();
