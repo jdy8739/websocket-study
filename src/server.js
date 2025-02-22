@@ -31,18 +31,26 @@ ioServer.on('connection', (socket) => {
 
         callback?.({ roomName });
 
-        socket.to(roomName).emit('welcome', `Someone has joined in the room ${roomName}`);
+        socket.to(roomName).emit('welcome', `User ${socket.id} has joined in the room ${roomName}`);
+    });
+
+    socket.on('nickname', (nickname, roomName, callback) => {
+        socket.nickname = nickname;
+
+        socket.to(roomName).emit('nickname', `The user ${socket.id} is now ${nickname}`);
+
+        callback?.();
     });
 
     socket.on('message', (message, roomName, callback) => {
-        socket.to(roomName).emit('message', `${socket.id}: ${message}`);
+        socket.to(roomName).emit('message', `${socket.nickname || socket.id}: ${message}`);
 
         callback?.();
     });
 
     socket.on('disconnecting', () => {
         socket.rooms.forEach((room) => { // rooms means the rooms the socket is currently in.
-            socket.to(room).emit('bye', `${socket.id} has left`);
+            socket.to(room).emit('bye', `${socket.nickname || socket.id} has left`);
         });
     });
 });
