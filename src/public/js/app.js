@@ -40,22 +40,18 @@ const makeWebRTCConnection = async (stream, socket, roomName) => {
         }
     });
 
-    myPeerConnection.addEventListener('track', ({ stream }) => {
-        // const video = document.createElement('video');
+    myPeerConnection.addEventListener('addstream', ({ stream }) => {
+        const video = document.createElement('video');
 
-        // const call = document.getElementById('call');
+        const call = document.getElementById('call');
 
-        // video.autoplay = true;
-        // video.playsinline = true;
-        // video.style.width = '400px';
-        // video.style.height = '400px';
-        // video.srcObject = stream;
+        video.autoplay = true;
+        video.playsinline = true;
+        video.style.width = '400px';
+        video.style.height = '400px';
+        video.srcObject = stream;
 
-        // call.append(video);
-
-        const peerFace = document.getElementById('peerFace');
-
-        peerFace.srcObject = stream;
+        call.append(video);
     });
 
     stream.getTracks().forEach((track) => {
