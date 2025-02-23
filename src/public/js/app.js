@@ -3,7 +3,7 @@ const getDevices = async (callback) => {
         const devices = await callback();
 
         return devices;
-    }   catch (e) {
+    }   catch (error) {
         console.log(error);
     };
 };
@@ -26,52 +26,17 @@ const getCameras = () => getDevices(async () => {
     return cameras;
 });
 
-const run = async () => {
-    const socket = io();
-
+const initStream = async () => {
     const myFace = document.getElementById('myFace');
 
     const myStream = await getMedia();
 
     myFace.srcObject = myStream;
 
-    const mediaEnabledState = {
-        audioOff: false,
-        videoOff: false,
-    };
+    return myStream;
+};
 
-    const mute = document.getElementById('mute');
-
-    const camera = document.getElementById('camera');
-
-    mute.addEventListener('click', () => {        
-        if (mediaEnabledState.audioOff) {
-            mute.innerText = 'Mute';
-        } else {
-            mute.innerText = 'Unmute';
-        }
-
-        mediaEnabledState.audioOff = !mediaEnabledState.audioOff;
-
-        myStream
-            .getAudioTracks()
-            .forEach((track) => track.enabled = !mediaEnabledState.audioOff);
-    });
-
-    camera.addEventListener('click', () => {
-        if (mediaEnabledState.videoOff) {
-            camera.innerText = 'Turn Camera On';
-        } else {
-            camera.innerText = 'Turn Camera Off';
-        }
-
-        mediaEnabledState.videoOff = !mediaEnabledState.videoOff;
-
-        myStream
-            .getVideoTracks()
-            .forEach((track) => track.enabled = !mediaEnabledState.videoOff);
-    });
-
+const setCameraOptions = async () => {
     const cameras = await getCameras();
 
     const camerasSelect = document.getElementById('cameras');
@@ -86,7 +51,43 @@ const run = async () => {
         return option;
     });
 
-    camerasSelect.append(...cameraOptions); // need implementing camera change event (3.2)
+    camerasSelect.append(...cameraOptions); // need implementing camera change event (3.2)  
+};
+
+const setMuteToggleEvent = (audioTracks) => {
+    const mute = document.getElementById('mute');
+
+    mute.addEventListener('click', () => {
+        const { enabled: currentEnabled } = audioTracks[0];
+
+        audioTracks.forEach((track) => track.enabled = !currentEnabled);
+
+        mute.innerText = currentEnabled ? 'Unmute' : 'Mute';
+    });
+};
+
+const setCameraToggleEvent = (videoTracks) => {
+    const camera = document.getElementById('camera');
+
+    camera.addEventListener('click', () => {
+        const { enabled: currentEnabled } = videoTracks[0];
+
+        videoTracks.forEach((track) => track.enabled = !currentEnabled);
+
+        camera.innerText = currentEnabled ? 'Turn Camera On' : 'Turn Camera Off';
+    });
+};
+
+const run = async () => {
+    const myStream = await initStream();
+
+    setMuteToggleEvent(myStream.getAudioTracks());
+
+    setCameraToggleEvent(myStream.getVideoTracks());
+
+    setCameraOptions();
+
+    const socket = io();
 };
 
 run();
