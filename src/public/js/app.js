@@ -26,14 +26,19 @@ const getCameras = () => getDevices(async () => {
     return cameras;
 });
 
-const getStream = async () => {
+const startStream = (steam) => {
     const myFace = document.getElementById('myFace');
+    myFace.srcObject = steam;
+}
 
-    const myStream = await getMedia();
+const makeWebRTCConnection = async (stream) => {
+    const myPeerConnection = new RTCPeerConnection();
 
-    myFace.srcObject = myStream;
+    stream.getTracks().forEach((track) => {
+        myPeerConnection.addTrack(track, stream);
+    });
 
-    return myStream;
+    return myPeerConnection;
 };
 
 const getCameraOptions = async () => {
@@ -84,8 +89,52 @@ const setCameraToggleEvent = (videoTracks) => {
     });
 };
 
-const initStream = async () => {
-    const myStream = await getStream();
+const setWelcomeEvent = (socket, myPeerConnection, roomName) => {
+    socket.on('welcome', async () => {
+        const offer = await myPeerConnection.createOffer();
+
+        myPeerConnection.setLocalDescription(offer);
+
+        setTimeout(() => {
+            socket.emit('offer', offer, roomName);
+        }, 100);
+    });
+};
+
+const setOfferEvent = (socket, myPeerConnection, roomName) => {
+    socket.on('offer', async (offer) => {
+        myPeerConnection.setRemoteDescription(offer);
+
+        const answer = await myPeerConnection.createAnswer();
+
+        myPeerConnection.setLocalDescription(answer);
+
+        socket.emit('answer', answer, roomName);
+    });
+};
+
+const setAnswerEvent = (socket, myPeerConnection) => {
+    socket.on('answer', async (answer) => {
+        myPeerConnection.setRemoteDescription(answer);
+
+        console.log('answer from server: ', answer);
+    });
+};
+
+const showStreaming = async (socket, roomName) => {
+    const myStream = await getMedia();
+
+    startStream(myStream);
+
+    const myPeerConnection = await makeWebRTCConnection(myStream);
+
+    setOfferEvent(socket, myPeerConnection, roomName);
+
+    setAnswerEvent(socket, myPeerConnection);
+
+    setWelcomeEvent(socket, myPeerConnection, roomName);
+
+    //
 
     setMuteToggleEvent(myStream.getAudioTracks());
 
@@ -94,7 +143,7 @@ const initStream = async () => {
     setCameraOptions();
 };
 
-const setRoomEnterEvent = (socket) => {
+const setRoomEnterEvent = (socket, callbackAfterEnteringRoom) => {
     const roomForm = document.getElementById('welcome');
 
     const roomInput = roomForm.querySelector('input');
@@ -107,26 +156,22 @@ const setRoomEnterEvent = (socket) => {
         socket.emit('enter_room', roomInput.value, () => {
             roomForm.hidden = true;
             call.hidden = false;
-
-            roomInput.value = '';    
             
-            initStream();
-        });
-    });
-};
+            callbackAfterEnteringRoom(socket, roomInput.value);
 
-const setWelcomeEvent = (socket) => {
-    socket.on('welcome', () => {
-        console.log('Someone joined');
+            roomInput.value = '';
+        });
     });
 };
 
 const run = async () => {
     const socket = io();
 
-    setRoomEnterEvent(socket);
+    // setOfferEvent(socket);
     
-    setWelcomeEvent(socket);
+    setRoomEnterEvent(socket, showStreaming);
+    
+    // setWelcomeEvent(socket);
 };
 
 run();
