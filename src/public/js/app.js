@@ -26,7 +26,7 @@ const getCameras = () => getDevices(async () => {
     return cameras;
 });
 
-const initStream = async () => {
+const getStream = async () => {
     const myFace = document.getElementById('myFace');
 
     const myStream = await getMedia();
@@ -36,10 +36,8 @@ const initStream = async () => {
     return myStream;
 };
 
-const setCameraOptions = async () => {
+const getCameraOptions = async () => {
     const cameras = await getCameras();
-
-    const camerasSelect = document.getElementById('cameras');
 
     const cameraOptions = cameras.map((camera) => {
         const option = document.createElement('option');
@@ -51,7 +49,15 @@ const setCameraOptions = async () => {
         return option;
     });
 
-    camerasSelect.append(...cameraOptions); // need implementing camera change event (3.2)  
+    return cameraOptions;
+};
+
+const setCameraOptions = async () => {
+    const cameraOptions = await getCameraOptions();
+
+    const cameraSelect = document.getElementById('cameras');
+
+    cameraSelect.append(...cameraOptions);
 };
 
 const setMuteToggleEvent = (audioTracks) => {
@@ -78,16 +84,49 @@ const setCameraToggleEvent = (videoTracks) => {
     });
 };
 
-const run = async () => {
-    const myStream = await initStream();
+const initStream = async () => {
+    const myStream = await getStream();
 
     setMuteToggleEvent(myStream.getAudioTracks());
 
     setCameraToggleEvent(myStream.getVideoTracks());
 
     setCameraOptions();
+};
 
+const setRoomEnterEvent = (socket) => {
+    const roomForm = document.getElementById('welcome');
+
+    const roomInput = roomForm.querySelector('input');
+
+    const call = document.getElementById('call');
+
+    roomForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        socket.emit('enter_room', roomInput.value, () => {
+            roomForm.hidden = true;
+            call.hidden = false;
+
+            roomInput.value = '';    
+            
+            initStream();
+        });
+    });
+};
+
+const setWelcomeEvent = (socket) => {
+    socket.on('welcome', () => {
+        console.log('Someone joined');
+    });
+};
+
+const run = async () => {
     const socket = io();
+
+    setRoomEnterEvent(socket);
+    
+    setWelcomeEvent(socket);
 };
 
 run();

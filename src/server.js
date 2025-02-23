@@ -19,4 +19,14 @@ const httpServer = http.createServer(app);
 
 const ioServer = new Server(httpServer);
 
+ioServer.on('connection', (socket) => {
+    socket.on('enter_room', (roomName, callback) => {
+        socket.join(roomName);
+        
+        callback?.();
+
+        socket.to(roomName).emit('welcome');
+    });
+});
+
 httpServer.listen(3000, () => console.log('hey'));
