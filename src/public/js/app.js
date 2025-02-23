@@ -31,8 +31,32 @@ const startStream = (steam) => {
     myFace.srcObject = steam;
 }
 
-const makeWebRTCConnection = async (stream) => {
+const makeWebRTCConnection = async (stream, socket, roomName) => {
     const myPeerConnection = new RTCPeerConnection();
+
+    myPeerConnection.addEventListener('icecandidate', ({ candidate }) => {
+        if (candidate) {
+            socket.emit('icecandidate', candidate, roomName);
+        }
+    });
+
+    myPeerConnection.addEventListener('track', ({ stream }) => {
+        // const video = document.createElement('video');
+
+        // const call = document.getElementById('call');
+
+        // video.autoplay = true;
+        // video.playsinline = true;
+        // video.style.width = '400px';
+        // video.style.height = '400px';
+        // video.srcObject = stream;
+
+        // call.append(video);
+
+        const peerFace = document.getElementById('peerFace');
+
+        peerFace.srcObject = stream;
+    });
 
     stream.getTracks().forEach((track) => {
         myPeerConnection.addTrack(track, stream);
@@ -116,8 +140,12 @@ const setOfferEvent = (socket, myPeerConnection, roomName) => {
 const setAnswerEvent = (socket, myPeerConnection) => {
     socket.on('answer', async (answer) => {
         myPeerConnection.setRemoteDescription(answer);
+    });
+};
 
-        console.log('answer from server: ', answer);
+const setIceCandidateEvent = (socket, myPeerConnection) => {
+    socket.on('icecandidate', (candidate) => {
+        myPeerConnection.addIceCandidate(candidate);
     });
 };
 
@@ -126,13 +154,15 @@ const showStreaming = async (socket, roomName) => {
 
     startStream(myStream);
 
-    const myPeerConnection = await makeWebRTCConnection(myStream);
+    const myPeerConnection = await makeWebRTCConnection(myStream, socket, roomName);
 
     setOfferEvent(socket, myPeerConnection, roomName);
 
     setAnswerEvent(socket, myPeerConnection);
 
     setWelcomeEvent(socket, myPeerConnection, roomName);
+
+    setIceCandidateEvent(socket, myPeerConnection);
 
     //
 
@@ -167,11 +197,7 @@ const setRoomEnterEvent = (socket, callbackAfterEnteringRoom) => {
 const run = async () => {
     const socket = io();
 
-    // setOfferEvent(socket);
-    
     setRoomEnterEvent(socket, showStreaming);
-    
-    // setWelcomeEvent(socket);
 };
 
 run();

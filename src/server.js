@@ -35,6 +35,10 @@ ioServer.on('connection', (socket) => {
     socket.on('answer', (answer, roomName) => {
         socket.to(roomName).emit('answer', answer);
     });
+
+    socket.on('icecandidate', (candidate, roomName) => {
+        socket.to(roomName).emit('icecandidate', candidate);
+    });
 });
 
 httpServer.listen(3000, () => console.log('hey'));
