@@ -26,14 +26,14 @@ const getCameras = () => getDevices(async () => {
     return cameras;
 });
 
-const startStream = (steam) => {
+const startStream = (stream) => {
     const myFace = document.getElementById('myFace');
-    myFace.srcObject = steam;
-}
+    myFace.srcObject = stream;
+};
 
-const makeWebRTCConnection = async (stream, socket, roomName) => {
-    const myPeerConnection = new RTCPeerConnection();
+const makeWebRTCConnection = async () => new RTCPeerConnection();
 
+const setWebRTCEvent = (myPeerConnection, socket, roomName) => {
     myPeerConnection.addEventListener('icecandidate', ({ candidate }) => {
         if (candidate) {
             socket.emit('icecandidate', candidate, roomName);
@@ -53,12 +53,12 @@ const makeWebRTCConnection = async (stream, socket, roomName) => {
 
         call.append(video);
     });
+};
 
+const addTrackOnStream = (stream, myPeerConnection) => {
     stream.getTracks().forEach((track) => {
         myPeerConnection.addTrack(track, stream);
     });
-
-    return myPeerConnection;
 };
 
 const getCameraOptions = async () => {
@@ -117,7 +117,7 @@ const setWelcomeEvent = (socket, myPeerConnection, roomName) => {
 
         setTimeout(() => {
             socket.emit('offer', offer, roomName);
-        }, 100);
+        }, 300);
     });
 };
 
@@ -150,7 +150,11 @@ const showStreaming = async (socket, roomName) => {
 
     startStream(myStream);
 
-    const myPeerConnection = await makeWebRTCConnection(myStream, socket, roomName);
+    const myPeerConnection = await makeWebRTCConnection();
+
+    setWebRTCEvent(myPeerConnection, socket, roomName);
+
+    addTrackOnStream(myStream, myPeerConnection);
 
     setOfferEvent(socket, myPeerConnection, roomName);
 
