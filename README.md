@@ -20,7 +20,7 @@
 
 - **`socket-io` 브랜치 (Socket.io 적용)** ✍  
   - 채팅방 기능 + 유저 세팅 기능 추가  
-  - WebSocket이 지원되지 않는 환경에서도 Long Polling을 사용하여 연결 유지  
+  - 채팅방 리스트 + 인원 수 표시  
 
 - **`main` 브랜치 (WebRTC 활용)** 🏗  
   - WebRTC 기반 화상 채팅 서비스 구현  
@@ -31,8 +31,8 @@
 ## 🛠 **기술 스택 (Tech Stack)**  
 
 - **[WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)** - 브라우저와 서버 간의 실시간 양방향 통신을 위한 프로토콜  
-- **[Socket.io](https://socket.io/)** - 브라우저와 서버 간의 실시간 양방향 통신을 위한 프로토콜  
-- **[WebRTC](https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API)** - 브라우저와 서버 간의 실시간 양방향 통신을 위한 프로토콜  
+- **[Socket.io](https://socket.io/)** - WebSocket 프로토콜을 추상화한 라이브러리  
+- **[WebRTC](https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API)** - 서버를 통하지 않고 두 피어간의 직접 연결을 맺는 네트워크 기술    
 - **[Node.js](https://nodejs.org/en)** - 간단한 정적 파일 서버 제공  
 
 ---
@@ -54,9 +54,10 @@ npm run dev
 
 ## 💡 배운 점 & 기술적 인사이트 (Learnings & Insights)  
 
+🔹 Socket.io는 WebSocket이 불가능한 환경에서도 동작하도록 추상화되어 있다.  
 🔹 Socket.io는 WebSocket 기반이지만, Long Polling을 지원하여 더 안정적인 연결을 보장  
 🔹 WebRTC는 서버를 거치지 않고 P2P 연결을 통해 영상/음성 데이터를 주고받을 수 있다.  
-🔹 Socket.io는 WebSocket이 불가능한 환경에서도 동작하도록 추상화되어 있다.  
+🔹 WebRTC는 커넥션을 맺기 위해 사용자의 스트림을 얻고 오퍼/앤서를 교환 후 두 피어간의 잠재적 연결통로인 icecandidate를 교환하여 커넥션을 맺는다.  
 🔹 WebRTC는 STUN/TURN 서버 설정이 필요하며, 방화벽 이슈가 있을 수 있다.  
 
 ---
