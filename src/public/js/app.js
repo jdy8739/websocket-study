@@ -31,27 +31,31 @@ const startStream = (stream) => {
     myFace.srcObject = stream;
 };
 
-const makeWebRTCConnection = async () => new RTCPeerConnection();
+const makeWebRTCConnection = () => new RTCPeerConnection();
 
 const setWebRTCEvent = (myPeerConnection, socket, roomName) => {
+    const call = document.getElementById('call');
+
+    myPeerConnection.addEventListener('track', ({ streams }) => {
+        if (!myPeerConnection['stream']) {
+            myPeerConnection['stream'] = streams[0];
+        
+            const video = document.createElement('video');
+
+            video.autoplay = true;
+            video.playsinline = true;
+            video.style.width = '400px';
+            video.style.height = '400px';
+            video.srcObject = streams[0];
+
+            call.append(video);
+        }
+    });
+
     myPeerConnection.addEventListener('icecandidate', ({ candidate }) => {
         if (candidate) {
             socket.emit('icecandidate', candidate, roomName);
         }
-    });
-
-    myPeerConnection.addEventListener('addstream', ({ stream }) => {
-        const video = document.createElement('video');
-
-        const call = document.getElementById('call');
-
-        video.autoplay = true;
-        video.playsinline = true;
-        video.style.width = '400px';
-        video.style.height = '400px';
-        video.srcObject = stream;
-
-        call.append(video);
     });
 };
 
@@ -150,7 +154,7 @@ const showStreaming = async (socket, roomName) => {
 
     startStream(myStream);
 
-    const myPeerConnection = await makeWebRTCConnection();
+    const myPeerConnection = makeWebRTCConnection();
 
     setWebRTCEvent(myPeerConnection, socket, roomName);
 
