@@ -41,6 +41,15 @@ const updateRooms = () => {
     ioServer.sockets.emit('rooms_changed', publicRooms);
 };
 
+const emitBye = (socket, roomName) => {
+    socket.to(roomName).emit(
+        'bye',
+        socket.nickname || socket.id,
+        roomName,
+        getRoomSize(roomName)
+    );  
+};
+
 ioServer.on('connection', (socket) => {
     console.log('user connected');
 
@@ -67,6 +76,16 @@ ioServer.on('connection', (socket) => {
         callback?.({ roomName, roomSize });
     });
 
+    socket.on('leave_room', (roomName, callback) => {
+        socket.leave(roomName);
+
+        emitBye(socket, roomName);
+
+        updateRooms();
+
+        callback?.();
+    });
+
     socket.on('nickname', (nickname, callback) => {
         socket.nickname = nickname;
 
@@ -80,14 +99,8 @@ ioServer.on('connection', (socket) => {
     });
 
     socket.on('disconnecting', () => {
-        socket.rooms.forEach((roomName) => { // rooms means the rooms the socket is currently in.
-            socket.to(roomName).emit(
-                'bye',
-                socket.nickname || socket.id,
-                roomName,
-                getRoomSize(roomName) - 1
-                );
-        });
+        // rooms means the rooms the socket is currently in.
+        socket.rooms.forEach((roomName) => emitBye(socket, roomName));
     });
 
     socket.on('disconnect', updateRooms);

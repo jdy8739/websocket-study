@@ -24,9 +24,33 @@ const messageInput = messageForm.querySelector("input");
 
 //
 
-const showRoom = () => {
-    welcome.hidden = true;
-    messages.hidden = false;
+/** message form listener */
+let messageFormListener = null;
+
+const resetMessages = () => {
+    ul.innerHTML = "";
+}
+
+const switchElement = ({ hideEl, showEl }) => {
+    hideEl.hidden = true;
+    showEl.hidden = false;
+}
+
+const showRoom = (socket, roomName) => {
+    switchElement({ hideEl: welcome, showEl: messages });
+
+    const leaveButton = messages.querySelector("#leave");
+
+    leaveButton.addEventListener("click", () => {
+        socket.emit("leave_room", roomName, () => {
+            switchElement({ hideEl: messages, showEl: welcome });
+            
+            resetMessages();
+
+            messageForm.removeEventListener("submit", messageFormListener);
+            messageFormListener = null;
+        });       
+    });
 };
 
 const updateRoomSize = (roomName, size) => {
@@ -40,7 +64,7 @@ const addMessage = (message) => {
 };
 
 const setMessageEvent = (socket, roomName) => {
-    messageForm.addEventListener("submit", (event) => {
+    messageFormListener = (event) => {
         event.preventDefault();
 
         socket.emit("message", messageInput.value, roomName, () => {
@@ -48,7 +72,9 @@ const setMessageEvent = (socket, roomName) => {
 
             messageInput.value = "";
         });
-    });
+    };
+    
+    messageForm.addEventListener("submit", messageFormListener);
 }
 
 const setRoomEnterEvent = (socket) => {
@@ -56,7 +82,7 @@ const setRoomEnterEvent = (socket) => {
         event.preventDefault();
     
         socket.emit("enter_room", roomInput.value, ({ roomName, roomSize }) => {
-            showRoom();
+            showRoom(socket, roomName);
 
             updateRoomSize(roomName, roomSize);
 
