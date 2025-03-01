@@ -20,10 +20,12 @@ html(lang="en")
                 button#camera Turn Camera Off
                 div 
                     form#msg
-                        input(placeholder="message", required, disabled, type="text")
-                        button Send
+                        input(placeholder="message", required, type="text")
+                        button(disabled) Send
                 div 
                     ul
+                div 
+                    button Leave
                 select#cameras
         script(src="/socket.io/socket.io.js")
         script(src="/public/js/app.js")

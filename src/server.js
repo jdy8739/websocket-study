@@ -43,6 +43,12 @@ ioServer.on('connection', (socket) => {
         socket.to(roomName).emit('welcome');
     });
 
+    socket.on('leave_room', (roomName, callback) => {
+        socket.leave(roomName);
+
+        callback();
+    });
+
     socket.on('offer', (offer, roomName) => {
         socket.to(roomName).emit('offer', offer);
     });

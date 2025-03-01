@@ -36,6 +36,8 @@ const makeWebRTCConnection = () => new RTCPeerConnection();
 const setWebRTCEvent = (myPeerConnection, socket, roomName) => {
     const call = document.getElementById('call');
 
+    const msgButton = call.querySelector('#msg > button');
+
     myPeerConnection.addEventListener('track', ({ streams }) => {
         if (!myPeerConnection['stream']) {
             myPeerConnection['stream'] = streams[0];
@@ -61,6 +63,8 @@ const setWebRTCEvent = (myPeerConnection, socket, roomName) => {
     myPeerConnection.addEventListener('iceconnectionstatechange', () => {
         if (myPeerConnection.iceConnectionState === 'disconnected') {
             window.alert('Connection lost');
+
+            msgButton.disabled = true;
             
             const peerVideo = call.querySelectorAll('video')[1];
 
@@ -156,11 +160,11 @@ const setWelcomeEvent = (socket, myPeerConnection, roomName) => {
 
         setChatEvent(dataChannel);
 
-        const msgInput = document.querySelector('#call #msg input');
+        const msgButton = document.querySelector('#call #msg button');
 
-        msgInput.disabled = false;
+        msgButton.disabled = false;
 
-        dataChannel.addEventListener('message', ({ data }) => updateChat(`other: ${data}`));
+        dataChannel.addEventListener('message', ({ data }) => updateChat(`peer: ${data}`));
         
         const offer = await myPeerConnection.createOffer();
 
@@ -178,11 +182,11 @@ const setOfferEvent = (socket, myPeerConnection, roomName) => {
 
             setChatEvent(channel);
 
-            const msgInput = document.querySelector('#call #msg input');
+            const msgButton = document.querySelector('#call #msg button');
 
-            msgInput.disabled = false;
+            msgButton.disabled = false;
 
-            channel.addEventListener('message', ({ data }) => updateChat(`other: ${data}`));
+            channel.addEventListener('message', ({ data }) => updateChat(`peer: ${data}`));
         });
 
         myPeerConnection.setRemoteDescription(offer);
@@ -204,6 +208,39 @@ const setAnswerEvent = (socket, myPeerConnection) => {
 const setIceCandidateEvent = (socket, myPeerConnection) => {
     socket.on('icecandidate', (candidate) => {
         myPeerConnection.addIceCandidate(candidate);
+    });
+};
+
+
+const setLeaveRoomEvent = (socket, myPeerConnection, roomName) => {
+    const roomForm = document.getElementById('welcome');
+
+    const call = document.getElementById('call');
+
+    const leaveButton = call.querySelector('div > div > button');
+
+    leaveButton.addEventListener('click', () => {
+        socket.emit('leave_room', roomName, () => {
+            myPeerConnection.close();
+
+            const msgButton = call.querySelector('#msg > button');
+
+            msgButton.disabled = true;
+
+            const ul = call.querySelector('ul');
+
+            ul.innerHTML = '';
+
+            const peerVideo = call.querySelectorAll('video')[1];
+
+            if (peerVideo) {
+                peerVideo.srcObject = null;
+                peerVideo.remove();
+            }
+
+            roomForm.hidden = false;
+            call.hidden = true;
+        });
     });
 };
 
@@ -233,6 +270,8 @@ const setStreaming = async (socket, roomName) => {
     setCameraToggleEvent(myStream.getVideoTracks());
 
     setCameraOptions();
+
+    setLeaveRoomEvent(socket, myPeerConnection, roomName);
 };
 
 const enterRoom = (socket, roomName, callbackAfterEnteringRoom) => {
