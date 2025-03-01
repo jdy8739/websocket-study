@@ -126,8 +126,42 @@ const setCameraToggleEvent = (videoTracks) => {
     });
 };
 
+const updateChat = (message) => {
+    const chat = document.createElement('li');
+
+    chat.innerText = message;
+
+    document.querySelector('ul').append(chat);
+};
+
+const setChatEvent = (dataChannel) => {
+    const msgForm = document.getElementById('msg');
+
+    msgForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const msgInput = msgForm.querySelector('input');
+
+        updateChat(`me: ${msgInput.value}`);
+
+        dataChannel.send(msgInput.value);
+
+        msgInput.value = '';
+    });
+};
+
 const setWelcomeEvent = (socket, myPeerConnection, roomName) => {
     socket.on('welcome', async () => {
+        const dataChannel = myPeerConnection.createDataChannel('chat');
+
+        setChatEvent(dataChannel);
+
+        const msgInput = document.querySelector('#call #msg input');
+
+        msgInput.disabled = false;
+
+        dataChannel.addEventListener('message', ({ data }) => updateChat(`other: ${data}`));
+        
         const offer = await myPeerConnection.createOffer();
 
         myPeerConnection.setLocalDescription(offer);
@@ -140,6 +174,17 @@ const setWelcomeEvent = (socket, myPeerConnection, roomName) => {
 
 const setOfferEvent = (socket, myPeerConnection, roomName) => {
     socket.on('offer', async (offer) => {
+        myPeerConnection.addEventListener('datachannel', ({ channel }) => {
+
+            setChatEvent(channel);
+
+            const msgInput = document.querySelector('#call #msg input');
+
+            msgInput.disabled = false;
+
+            channel.addEventListener('message', ({ data }) => updateChat(`other: ${data}`));
+        });
+
         myPeerConnection.setRemoteDescription(offer);
 
         const answer = await myPeerConnection.createAnswer();
@@ -162,7 +207,7 @@ const setIceCandidateEvent = (socket, myPeerConnection) => {
     });
 };
 
-const showStreaming = async (socket, roomName) => {
+const setStreaming = async (socket, roomName) => {
     const myStream = await getMedia();
 
     startStream(myStream);
@@ -215,7 +260,7 @@ const setRoomEnterEvent = (socket) => {
                     roomForm.hidden = true;
                     call.hidden = false;
                     
-                    showStreaming(socket, roomInput.value);
+                    setStreaming(socket, roomInput.value);
 
                     roomInput.value = '';
                 });
@@ -224,10 +269,6 @@ const setRoomEnterEvent = (socket) => {
     });
 };
 
-const run = async () => {
-    const socket = io();
-
-    setRoomEnterEvent(socket);
-};
+const run = () => setRoomEnterEvent(io());
 
 run();
