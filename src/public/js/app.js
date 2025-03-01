@@ -57,6 +57,19 @@ const setWebRTCEvent = (myPeerConnection, socket, roomName) => {
             socket.emit('icecandidate', candidate, roomName);
         }
     });
+
+    myPeerConnection.addEventListener('iceconnectionstatechange', () => {
+        if (myPeerConnection.iceConnectionState === 'disconnected') {
+            window.alert('Connection lost');
+            
+            const peerVideo = call.querySelectorAll('video')[1];
+
+            peerVideo.srcObject = null;
+            peerVideo.remove();
+
+            myPeerConnection['stream'] = null;
+        }
+    });
 };
 
 const addTrackOnStream = (stream, myPeerConnection) => {
