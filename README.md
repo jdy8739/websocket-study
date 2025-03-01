@@ -58,7 +58,8 @@ npm run dev
 🔹 Socket.io는 WebSocket 기반이지만, Long Polling을 지원하여 더 안정적인 연결을 보장  
 🔹 WebRTC는 서버를 거치지 않고 P2P 연결을 통해 영상/음성 데이터를 주고받을 수 있다.  
 🔹 WebRTC는 커넥션을 맺기 위해 사용자의 스트림을 얻고 오퍼/앤서를 교환 후 두 피어간의 잠재적 연결통로인 icecandidate를 교환하여 커넥션을 맺는다.  
-🔹 WebRTC는 STUN/TURN 서버 설정이 필요하며, 방화벽 이슈가 있을 수 있다.  
+🔹 WebRTC는 STUN/TURN 서버 설정이 필요하며, 방화벽 이슈가 있을 수 있다.
+🔹 WebRTC가 제공하는 datachannel은 모든 종류의 미디어를 P2P로 전송할 수 있다.
 
 ---
 
@@ -67,5 +68,5 @@ npm run dev
 🚧 카메라 선택 기능 추가  
 다른 내장 카메라를 선택해도 카메라 변경이 적용되지 않는 점 수정  
 
-🚧 배포 진행  
-Vercel을 통한 배포  
+🚧 버그 개선
+유저가 채팅방 재입장 시 'RTCDataChannel's ReadyState is not 'open'라는 콘솔에러가 뜨며 채팅이 안되는 버그 수정  
