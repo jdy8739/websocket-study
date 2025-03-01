@@ -138,8 +138,6 @@ const updateChat = (message) => {
     document.querySelector('ul').append(chat);
 };
 
-let chatCallback = null;
-
 const setChatEvent = (dataChannel) => {
     const msgForm = document.getElementById('msg');
 
@@ -269,6 +267,8 @@ const setLeaveRoomEvent = (socket, myPeerConnection, roomName) => {
         });
     });
 };
+
+let chatCallback = null;
 
 const setStreaming = async (socket, roomName) => {
     const myStream = await getMedia();
