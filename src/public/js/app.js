@@ -177,7 +177,13 @@ const showStreaming = async (socket, roomName) => {
     setCameraOptions();
 };
 
-const setRoomEnterEvent = (socket, callbackAfterEnteringRoom) => {
+const enterRoom = (socket, roomName, callbackAfterEnteringRoom) => {
+    socket.emit('enter_room', roomName, () => {
+        callbackAfterEnteringRoom(socket, roomName);
+    });
+};
+
+const setRoomEnterEvent = (socket) => {
     const roomForm = document.getElementById('welcome');
 
     const roomInput = roomForm.querySelector('input');
@@ -187,13 +193,20 @@ const setRoomEnterEvent = (socket, callbackAfterEnteringRoom) => {
     roomForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
-        socket.emit('enter_room', roomInput.value, () => {
-            roomForm.hidden = true;
-            call.hidden = false;
-            
-            callbackAfterEnteringRoom(socket, roomInput.value);
+         // check if the room is full
+        socket.emit('check_room_is_full', roomInput.value, (isFull) => {
+            if (isFull) {
+                window.alert('Room is full');
+            } else {
+                enterRoom(socket, roomInput.value, () => {
+                    roomForm.hidden = true;
+                    call.hidden = false;
+                    
+                    showStreaming(socket, roomInput.value);
 
-            roomInput.value = '';
+                    roomInput.value = '';
+                });
+            }
         });
     });
 };
@@ -201,7 +214,7 @@ const setRoomEnterEvent = (socket, callbackAfterEnteringRoom) => {
 const run = async () => {
     const socket = io();
 
-    setRoomEnterEvent(socket, showStreaming);
+    setRoomEnterEvent(socket);
 };
 
 run();

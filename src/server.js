@@ -19,11 +19,26 @@ const httpServer = http.createServer(app);
 
 const ioServer = new Server(httpServer);
 
+const getRoomSize = (roomName) => {
+    const room = ioServer.sockets.adapter.rooms.get(roomName);
+
+    return room ? room.size : 0;
+};
+
 ioServer.on('connection', (socket) => {
+
+    socket.on('check_room_is_full', (roomName, callback) => {
+        if (getRoomSize(roomName) >= 2) {
+            callback(true);
+        } else {
+            callback(false);
+        }
+    });
+
     socket.on('enter_room', (roomName, callback) => {
         socket.join(roomName);
-        
-        callback?.();
+
+        callback();
 
         socket.to(roomName).emit('welcome');
     });
