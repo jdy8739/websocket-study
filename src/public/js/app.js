@@ -138,10 +138,12 @@ const updateChat = (message) => {
     document.querySelector('ul').append(chat);
 };
 
+let chatCallback = null;
+
 const setChatEvent = (dataChannel) => {
     const msgForm = document.getElementById('msg');
 
-    msgForm.addEventListener('submit', (e) => {
+    chatCallback = (e) => {
         e.preventDefault();
 
         const msgInput = msgForm.querySelector('input');
@@ -151,14 +153,18 @@ const setChatEvent = (dataChannel) => {
         dataChannel.send(msgInput.value);
 
         msgInput.value = '';
-    });
+    }
+
+    msgForm.addEventListener('submit', chatCallback);
 };
 
 const setWelcomeEvent = (socket, myPeerConnection, roomName) => {
     socket.on('welcome', async () => {
         const dataChannel = myPeerConnection.createDataChannel('chat');
 
-        setChatEvent(dataChannel);
+        if (!chatCallback) {
+            setChatEvent(dataChannel);
+        }
 
         const msgButton = document.querySelector('#call #msg button');
 
@@ -211,6 +217,21 @@ const setIceCandidateEvent = (socket, myPeerConnection) => {
     });
 };
 
+const removePeerConnection = (peerConnection) => {
+    peerConnection.getSenders().forEach(sender => {
+        if (sender.track) sender.track.stop();
+    });
+  
+    peerConnection.getReceivers().forEach(receiver => {
+        if (receiver.track) receiver.track.stop();
+      });
+  
+    // 모든 데이터 채널 닫기
+    peerConnection.getDataChannels?.().forEach(channel => channel.close());
+
+    // 연결 닫기
+    peerConnection.close();  
+}
 
 const setLeaveRoomEvent = (socket, myPeerConnection, roomName) => {
     const roomForm = document.getElementById('welcome');
@@ -219,10 +240,12 @@ const setLeaveRoomEvent = (socket, myPeerConnection, roomName) => {
 
     const leaveButton = call.querySelector('div > div > button');
 
+    const msgForm = document.getElementById('msg');
+
     leaveButton.addEventListener('click', () => {
         socket.emit('leave_room', roomName, () => {
-            myPeerConnection.close();
-
+            removePeerConnection(myPeerConnection);
+            
             const msgButton = call.querySelector('#msg > button');
 
             msgButton.disabled = true;
@@ -237,6 +260,9 @@ const setLeaveRoomEvent = (socket, myPeerConnection, roomName) => {
                 peerVideo.srcObject = null;
                 peerVideo.remove();
             }
+
+            msgForm.removeEventListener('submit', chatCallback);
+            chatCallback = null;
 
             roomForm.hidden = false;
             call.hidden = true;
@@ -263,13 +289,11 @@ const setStreaming = async (socket, roomName) => {
 
     setIceCandidateEvent(socket, myPeerConnection);
 
-    //
-
     setMuteToggleEvent(myStream.getAudioTracks());
 
     setCameraToggleEvent(myStream.getVideoTracks());
 
-    setCameraOptions();
+    // setCameraOptions();
 
     setLeaveRoomEvent(socket, myPeerConnection, roomName);
 };
@@ -293,7 +317,7 @@ const setRoomEnterEvent = (socket) => {
          // check if the room is full
         socket.emit('check_room_is_full', roomInput.value, (isFull) => {
             if (isFull) {
-                window.alert('Room is full');
+                window.alert('This Room is full!');
             } else {
                 enterRoom(socket, roomInput.value, () => {
                     roomForm.hidden = true;
